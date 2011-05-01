@@ -1,6 +1,4 @@
 <?php # runaway.php - Runaway Script
-//require_once("PEAR.php");
-//require_once("Net/Ident.php");
 
 $oid_simple = array(
 						  'One Minute Load' => '.1.3.6.1.4.1.2021.10.1.3.1',
@@ -32,12 +30,6 @@ foreach($netgrouplist AS $host) {
 			$cpuCount++;
 	}
 	
-	/*
-	$ident = new Net_Ident($host);
-	printf('Query: %s', $ident->query());
-	printf('Error: %s', $ident->identError());
-	printf('User: %s<br />', $ident->getUser());
-	*/
 	$users = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.5', 20000, 5);
 	$userCount = $users["HOST-RESOURCES-MIB::hrSystemNumUsers.0"];
 	if (!empty($userCount)) {
