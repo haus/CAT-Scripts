@@ -46,7 +46,7 @@ if (!empty($curResultPM)) {
 	
 	foreach ($curResultPM AS $key => $processInfo) {
 		preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunPerfMem\.(.*)/', $key, $name);
-		preg_match('/INTEGER: (.*)/', $processInfo, $matches);
+		preg_match('/INTEGER: (.*) KBytes/', $processInfo, $matches);
 		
 		$process[$name[1]]['mem'] = $matches[1];
 	}
@@ -109,7 +109,7 @@ printf('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 		 ');
 
 if ($result) {
-	printf('<table class="tablesorter"><thead><tr><th>PID</th><th>Process</th><th>Memory</th><th>CPU Time</th></tr></thead><tbody>');
+	printf('<table class="tablesorter"><thead><tr><th>PID</th><th>Process</th><th>Memory (in KB)</th><th>CPU Time</th></tr></thead><tbody>');
 	
 	
 	$processList = array();
@@ -126,7 +126,7 @@ if ($result) {
 	foreach ($processList AS $data) {
 		$count++;
 		if ($count < 20)
-			printf("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>", $data['num'], $data['name'], $data['mem'], $data['time']);
+			printf('<tr><td align="center">%s</td><td>%s</td><td align="center">%s</td><td align="center">%s</td></tr>', $data['num'], $data['name'], $data['mem'], $data['time']);
 	}
 	printf("</tbody></table>");
 }

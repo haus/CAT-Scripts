@@ -18,10 +18,20 @@ $oid_complex = array(
 $netgrouplist = array();
 $hostInfo = array();
 
+$cpuOID = '.1.3.6.1.2.1.25.3.2.1.2';
+
 netGroupList("linux-login-sys");
 
 foreach($netgrouplist AS $host) {
 	$result = false;
+	$cpuCount = 0;
+	$cpuInfo = @snmp2_real_walk($host, "public", $cpuOID, 200000, 5);
+	
+	foreach ($cpuInfo AS $key => $value) {
+		if (strpos($value, 'hrDeviceProcessor') !== false)
+			$cpuCount++;
+	}
+	
 	/*
 	$ident = new Net_Ident($host);
 	printf('Query: %s', $ident->query());
@@ -56,6 +66,8 @@ foreach($netgrouplist AS $host) {
 			$hostInfo[$host][$name] = $matches[1];
 		}
 	}
+	
+	$hostInfo[$host]['CPU Count'] = $cpuCount;
 }
 
 $keys = array_keys($hostInfo);
@@ -72,7 +84,11 @@ printf('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 					<script type="text/javascript" src="../includes/jquery.fancybox-1.3.4/fancybox/jquery.easing-1.4.pack.js"></script>
 					<link rel="stylesheet" href="../includes/jquery.fancybox-1.3.4/fancybox/jquery.fancybox-1.3.4.css" type="text/css" />
 					<link rel="stylesheet" href="../includes/jquery.tablesorter/themes/blue/style.css" type="text/css" />
-					<link rel="stylesheet" href="../includes/jquery.tablesorter/themes/green/style.css" type="text/css" />
+					<style type="text/css">
+						table.tablesorter tbody tr.high_load td {
+							background-color: red !important;
+						}
+					</style>
 					<script type="text/javascript">
 						$(document).ready(function() {
 							// add parser through the tablesorter addParser method
@@ -105,6 +121,7 @@ printf('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 							});
 						});
 					</script>
+					<title>Runaway Check</title>
 				</head>
 				<body>
 			 ');
@@ -118,7 +135,12 @@ foreach($headers AS $header) {
 printf("</tr>\n</thead>\n<tbody>\n");
 
 foreach($hostInfo AS $host => $data) {
-	printf('<tr><td>%s (<a class="inline" href="runaway_detail.php?host=%s">Detail</a>)</td>' . "\n", $host, $host);
+	$loaded = false;
+	
+	if ($data["CPU Count"] < max($data["One Minute Load"], $data["Five Minute Load"], $data["Fifteen Minute Load"]))
+		$loaded = true;
+	
+	printf('<tr %s id="%s"><td>%s (<a class="inline" href="runaway_detail.php?host=%s">Detail</a>)</td>' . "\n", ($loaded ? 'class="high_load"' : NULL), $host, $host, $host);
 	foreach ($data AS $datum) {
 		printf("<td>%s</td>\n", $datum);
 	}
