@@ -51,7 +51,7 @@ foreach($netgrouplist AS $host) {
 			if (strpos($curResult, "STRING") !== false) {
 				preg_match('/STRING: (.*)/', $curResult, $matches);
 			} else {
-				if (preg_match('/Timeticks\: \([0-9]*\) ([0-9]* day[s]?, .*)/', $curResult, $matches) === 0)
+				if (preg_match('/Timeticks\: \([0-9]*\) (([0-9]* day[s]?, .*)|(.*))/', $curResult, $matches) === 0)
 					$matches[1] = $curResult;
 			}
 			
