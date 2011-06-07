@@ -80,6 +80,9 @@ printf('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 						table.tablesorter tbody tr.high_load td {
 							background-color: red !important;
 						}
+						table.tablesorter tbody tr.unreachable td {
+							background-color: orange !important;
+						}
 					</style>
 					<script type="text/javascript">
 						$(document).ready(function() {
@@ -127,16 +130,24 @@ foreach($headers AS $header) {
 printf("</tr>\n</thead>\n<tbody>\n");
 
 foreach($hostInfo AS $host => $data) {
-	$loaded = false;
-	
-	if ($data["CPU Count"] < max($data["One Minute Load"], $data["Five Minute Load"], $data["Fifteen Minute Load"]))
-		$loaded = true;
-	
-	printf('<tr %s id="%s"><td>%s (<a class="inline" href="runaway_detail.php?host=%s">Detail</a>)</td>' . "\n", ($loaded ? 'class="high_load"' : NULL), $host, $host, $host);
-	foreach ($data AS $datum) {
-		printf("<td>%s</td>\n", $datum);
+	if ($data["CPU Count"] > 0) {
+		$loaded = false;
+		
+		if ($data["CPU Count"] < max($data["One Minute Load"], $data["Five Minute Load"], $data["Fifteen Minute Load"]))
+			$loaded = true;
+		
+		printf('<tr %s id="%s"><td>%s (<a class="inline" href="runaway_detail.php?host=%s">Detail</a>)</td>' . "\n", ($loaded ? 'class="high_load"' : NULL), $host, $host, $host);
+		printf("<!--");
+			print_r($data);
+		printf("-->");
+		
+		foreach ($data AS $datum) {
+			printf("<td>%s</td>\n", $datum);
+		}
+		printf("</tr>\n");
+	} else {
+		printf('<tr class="unreachable"><td>%s</td><td colspan="7">The host seems to be down at the moment.</td></tr>', $host);
 	}
-	printf("</tr>\n");
 }
 printf("</tbody>\n</table>\n</body></html>");
 
