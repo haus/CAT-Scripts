@@ -146,7 +146,7 @@ foreach($hostInfo AS $host => $data) {
     }
     printf("</tr>\n");
   } else {
-    printf('<tr class="unreachable"><td>%s</td><td colspan="7">The host seems to be down at the moment.</td></tr>', $host);
+    printf('<tr class="unreachable"><td>%s</td><td colspan="7">The host seems to be down at the moment.</td><!-- %s --></tr>', $host, print_r($data));
   }
 }
 printf("</tbody>\n</table>\n</body></html>");
