@@ -26,19 +26,33 @@ foreach($netgrouplist AS $host) {
   $cpuInfo = @snmp2_real_walk($host, "public", $cpuOID, 200000, 5);
 
   foreach ($cpuInfo AS $key => $value) {
-    if (strpos($value, 'hrDeviceProcessor') !== false)
+    if (strpos($value, 'hrDeviceProcessor') !== false || strpos($value, 'iso.3.6.1.2.1.25.3.1.3') !== false)
       $cpuCount++;
   }
 
   $users = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.5', 20000, 5);
-  $userCount = $users["HOST-RESOURCES-MIB::hrSystemNumUsers.0"];
+  if (array_key_exists("HOST-RESOURCES-MIB::hrSystemNumUsers.0", $users)) {
+    $userCount = $users["HOST-RESOURCES-MIB::hrSystemNumUsers.0"];
+  } elseif (array_key_exists("iso.3.6.1.2.1.25.1.5.0", $users)) {
+    $userCount = $users["iso.3.6.1.2.1.25.1.5.0"];
+  } else {
+    $userCount = array();
+  }
+
   if (!empty($userCount)) {
     preg_match('/Gauge[0-9]*\: (.*)/', $userCount, $matches);
     $hostInfo[$host]['User Count'] = $matches[1];
   }
 
   $procs = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.6', 20000, 5);
-  $procCount = $procs["HOST-RESOURCES-MIB::hrSystemProcesses.0"];
+  if (array_key_exists("HOST-RESOURCES-MIB::hrSystemProcesses.0", $procs)) {
+    $procCount = $procs["HOST-RESOURCES-MIB::hrSystemProcesses.0"];
+  } elseif (array_key_exists("iso.3.6.1.2.1.25.1.6.0", $procs)) {
+    $procCount = $procs["iso.3.6.1.2.1.25.1.6.0"];
+  } else {
+    $procCount = array();
+  }
+
   if (!empty($procCount)) {
     preg_match('/Gauge[0-9]*\: (.*)/', $procCount, $matches);
     $hostInfo[$host]['Process Count'] = $matches[1];
@@ -49,7 +63,7 @@ foreach($netgrouplist AS $host) {
 
     if (!empty($curResult)) {
       if (strpos($curResult, "STRING") !== false) {
-        preg_match('/STRING: (.*)/', $curResult, $matches);
+        preg_match('/STRING: "(.*)"/', $curResult, $matches);
       } else {
         if (preg_match('/Timeticks\: \([0-9]*\) (([0-9]* day[s]?, .*)|(.*))/', $curResult, $matches) === 0)
           $matches[1] = $curResult;
@@ -146,7 +160,7 @@ foreach($hostInfo AS $host => $data) {
     }
     printf("</tr>\n");
   } else {
-    printf('<tr class="unreachable"><td>%s</td><td colspan="7">The host seems to be down at the moment.</td><!-- %s --></tr>', $host, print_r($data));
+    printf('<tr class="unreachable"><td>%s</td><td colspan="7">The host seems to be down at the moment.</td></tr>', $host);
   }
 }
 printf("</tbody>\n</table>\n</body></html>");
