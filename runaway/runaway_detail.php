@@ -1,5 +1,8 @@
 <?php # runaway_details.php - Runaway Script
 
+define("TIMEOUT", 200000);
+define("RETRIES", 5);
+
 if (!isset($_GET["host"])) {
   exit();
 } else {
@@ -13,17 +16,23 @@ $process_time = '.1.3.6.1.2.1.25.5.1.1.1';
 $process_mem = '.1.3.6.1.2.1.25.5.1.1.2';
 $process_param = '.1.3.6.1.2.1.25.4.2.1.5';
 
-$curResultPL = @snmp2_real_walk($host, "public", $process_list, 20000, 5);
-$curResultPT = @snmp2_real_walk($host, "public", $process_time, 20000, 5);
-$curResultPM = @snmp2_real_walk($host, "public", $process_mem, 20000, 5);
-$curResultPA = @snmp2_real_walk($host, "public", $process_param, 20000, 5);
+$curResultPL = @snmp2_real_walk($host, "public", $process_list, TIMEOUT, RETRIES);
+$curResultPT = @snmp2_real_walk($host, "public", $process_time, TIMEOUT, RETRIES);
+$curResultPM = @snmp2_real_walk($host, "public", $process_mem, TIMEOUT, RETRIES);
+$curResultPA = @snmp2_real_walk($host, "public", $process_param, TIMEOUT, RETRIES);
 $process = array();
 
 if (!empty($curResultPL)) {
 
+  # PL: iso.3.6.1.2.1.25.4.2.1.2.PID
   foreach ($curResultPL AS $key => $processInfo) {
-    preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunName\.(.*)/', $key, $name);
-    preg_match('/STRING: (.*)/', $processInfo, $matches);
+    if (strpos($key, "HOST-RESOURCES-MIB::hrSWRunName") !== false) {
+      preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunName\.(.*)/', $key, $name);
+      preg_match('/STRING: (.*)/', $processInfo, $matches);
+    } elseif (strpos($key, "iso.3.6.1.2.1.25.4.2.1.2") !== false) {
+      preg_match('/iso.3.6.1.2.1.25.4.2.1.2.(\d*)/', $key, $name);
+      preg_match('/STRING: "(.*)"/', $processInfo, $matches);
+    }
 
     $process[$name[1]]['name'] = $matches[1];
   }
@@ -32,9 +41,16 @@ if (!empty($curResultPL)) {
 }
 
 if (!empty($curResultPT)) {
+
+  # PT: iso.3.6.1.2.1.25.5.1.1.1.PID
   foreach ($curResultPT AS $key => $processInfo) {
-    preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunPerfCPU\.(.*)/', $key, $name);
-    preg_match('/INTEGER: (.*)/', $processInfo, $matches);
+    if (strpos($key, "HOST-RESOURCES-MIB::hrSWRunPerfCPU") !== false) {
+      preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunPerfCPU\.(.*)/', $key, $name);
+      preg_match('/INTEGER: (.*)/', $processInfo, $matches);
+    } elseif (strpos($key, "iso.3.6.1.2.1.25.5.1.1.1") !== false) {
+      preg_match('/iso.3.6.1.2.1.25.5.1.1.1.(\d*)/', $key, $name);
+      preg_match('/INTEGER: (.*)/', $processInfo, $matches);
+    }
 
     $process[$name[1]]['time'] = $matches[1];
   }
@@ -44,9 +60,15 @@ if (!empty($curResultPT)) {
 
 if (!empty($curResultPM)) {
 
+  # PM: iso.3.6.1.2.1.25.5.1.1.2.PID
   foreach ($curResultPM AS $key => $processInfo) {
-    preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunPerfMem\.(.*)/', $key, $name);
-    preg_match('/INTEGER: (.*) KBytes/', $processInfo, $matches);
+    if (strpos($key, "HOST-RESOURCES-MIB::hrSWRunPerfMem") !== false) {
+      preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunPerfMem\.(.*)/', $key, $name);
+      preg_match('/INTEGER: (.*) KBytes/', $processInfo, $matches);
+    } elseif (strpos($key, "iso.3.6.1.2.1.25.5.1.1.2") !== false) {
+      preg_match('/iso.3.6.1.2.1.25.5.1.1.2.(\d*)/', $key, $name);
+      preg_match('/INTEGER: (\d*)/', $processInfo, $matches);
+    }
 
     $process[$name[1]]['mem'] = $matches[1];
   }
@@ -56,10 +78,15 @@ if (!empty($curResultPM)) {
 
 if (!empty($curResultPA)) {
 
+  # PA: iso.3.6.1.2.1.25.4.2.1.5.PID
   foreach ($curResultPA AS $key => $processInfo) {
-    preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunParameters\.(.*)/', $key, $name);
+    if (strpos($key, "HOST-RESOURCES-MIB::hrSWRunParameters") !== false) {
+      preg_match('/HOST\-RESOURCES\-MIB\:\:hrSWRunParameters\.(.*)/', $key, $name);
+    } elseif (strpos($key, "iso.3.6.1.2.1.25.4.2.1.5") !== false) {
+      preg_match('/iso.3.6.1.2.1.25.4.2.1.5.(\d*)/', $key, $name);
+    }
 
-    if (preg_match('/STRING: (.*)/', $processInfo, $matches) === 0)
+    if (preg_match('/STRING: "(.*)"/', $processInfo, $matches) === 0)
       $matches[1] = NULL;
 
     $process[$name[1]]['param'] = $matches[1];

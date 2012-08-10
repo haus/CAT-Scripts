@@ -1,5 +1,8 @@
 <?php # runaway.php - Runaway Script
 
+define("TIMEOUT", 200000);
+define("RETRIES", 5);
+
 $oid_simple = array(
               'One Minute Load' => '.1.3.6.1.4.1.2021.10.1.3.1',
               'Five Minute Load' => '.1.3.6.1.4.1.2021.10.1.3.2',
@@ -30,7 +33,7 @@ foreach($netgrouplist AS $host) {
       $cpuCount++;
   }
 
-  $users = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.5', 20000, 5);
+  $users = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.5', TIMEOUT, RETRIES);
   if (array_key_exists("HOST-RESOURCES-MIB::hrSystemNumUsers.0", $users)) {
     $userCount = $users["HOST-RESOURCES-MIB::hrSystemNumUsers.0"];
   } elseif (array_key_exists("iso.3.6.1.2.1.25.1.5.0", $users)) {
@@ -44,7 +47,7 @@ foreach($netgrouplist AS $host) {
     $hostInfo[$host]['User Count'] = $matches[1];
   }
 
-  $procs = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.6', 20000, 5);
+  $procs = @snmp2_real_walk($host, "public", '.1.3.6.1.2.1.25.1.6', TIMEOUT, RETRIES);
   if (array_key_exists("HOST-RESOURCES-MIB::hrSystemProcesses.0", $procs)) {
     $procCount = $procs["HOST-RESOURCES-MIB::hrSystemProcesses.0"];
   } elseif (array_key_exists("iso.3.6.1.2.1.25.1.6.0", $procs)) {
@@ -59,7 +62,7 @@ foreach($netgrouplist AS $host) {
   }
 
   foreach($oid_simple AS $name => $value) {
-    $curResult = @snmp2_get($host, "public", $value, 20000, 5);
+    $curResult = @snmp2_get($host, "public", $value, TIMEOUT, RETRIES);
 
     if (!empty($curResult)) {
       if (strpos($curResult, "STRING") !== false) {
