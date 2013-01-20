@@ -2,16 +2,26 @@ require 'cinch'
 require 'open-uri'
 require 'nokogiri'
 require 'cgi'
+require 'yaml'
 
 # This bot connects to urban dictionary and returns the first result
 # for a given query, replying with the result directly to the sender
+config_file = ARGV[0] || File.join(File.dirname(__FILE__), "trimet_config.yaml")
+if File.exists?(config_file)
+  CONFIG = YAML.load_file(config_file)
+  puts CONFIG.inspect
+else
+  raise "Need a config file"
+  exit 1
+end
 
 bot = Cinch::Bot.new do
   configure do |c|
-    c.server   = "irc.freenode.net" #server
-    c.nick     = "TrimetBot"
-    c.channels = ["#channel"] #channel list here
-    #c.ssl.use  = true
+    c.server    = CONFIG[:server]
+    c.port      = CONFIG[:port]
+    c.nick      = CONFIG[:nick]
+    c.channels  = CONFIG[:channels]
+    c.ssl.use   = CONFIG[:ssl]
   end
 
   helpers do
@@ -19,20 +29,20 @@ bot = Cinch::Bot.new do
     # of doing this *by far* and is simply a helper method to show how it
     # can be done.. it works!
     def trimet(query)
-    	@apikey = "APIKEY" #actual api key here
-    	query = query.split(",")
-      stopID = query[0].strip
-      lineNum = (query[1] == nil ? nil : query[1].strip)
+      @apikey = CONFIG[:api_key]
+      query = quey.split(",")
+      stopID = qury[0].strip
+      lineNum = (uery[1] == nil ? nil : query[1].strip)
       count = 0
 
-    	returnString = String.new
-    	url = "http://developer.trimet.org/ws/V1/arrivals?locIDs=#{stopID}&appID=#{@apikey}"
-    	results = Hash.new
+      returnString = String.new
+      url = "http://developer.trimet.org/ws/V1/arrivals?locIDs=#{stopID}&appID=#{@apikey}"
+      results = Hash.new
 
-    	doc = Nokogiri::XML::Reader(open(url))
-    	doc.each do | node |
+      doc = Nokogiri::XML::Reader(open(url))
+      doc.each do | node |
         case node.name
-          when "location" 
+          when "location"
             if (node.depth == 1)
               returnString << "Stop ID: #{stopID} - #{node.attribute("desc")}\n"
             end
@@ -67,19 +77,25 @@ bot = Cinch::Bot.new do
       else
         returnString << "No results for that query.\n"
       end
-      
+
       return returnString
     end
   end
 
   on :message, /^!trimet (.+)/ do |m, term|
-    case term
-      when "help"
-        m.reply("Usage: '!trimet stopID' or '!trimet stopID, linenum' for transit tracker results.")
-      else #when /^[0-9]+/
-        m.reply(trimet(term) || "No results found", true)
+    if term == "help"
+      m.reply("Usage: !trimet <stopID> for transit tracker results for stopID.")
+    else
+      m.reply(trimet(term) || "No results found", true)
     end
   end
+
+  on :message, /^(!trimet|Trimet).*(help)/ do |m, target, term|
+    if term == "help"
+      m.reply("Usage: !trimet <stopID> for transit tracker results for stopID.")
+    end
+  end
+
 end
 
 bot.start

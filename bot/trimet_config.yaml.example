@@ -1,0 +1,9 @@
+---
+:server:    irc.cat.pdx.edu
+:port:      6697
+:nick:      botnick
+:channels:
+  - '#channel1 key1'
+  - '#channel2 key2
+:ssl:       true
+:api_key:   TRIMET_API_KEY
