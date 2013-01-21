@@ -1,5 +1,9 @@
 location = doc.xpath('//xmlns:location').attribute("desc").value
-arrivals = doc.xpath('//xmlns:arrivals')
+if route
+  arrivals = doc.xpath("//xmlns:arrivals[@route=#{route}]")
+else
+  arrivals = doc.xpath('//xmlns:arrivals')
+end
 
 doc.each do | node |
   case node.name
