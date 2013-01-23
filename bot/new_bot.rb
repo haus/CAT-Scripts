@@ -11,7 +11,11 @@ def parse_results(doc, route)
 
   unless (t_error = doc.xpath('//xmlns:errorMessage')).empty?
     error = t_error.inner_text
+    raise error
   end
+
+  results = []
+  results << "Stop ID: #{stopID} - #{location}"
 
   arrivals.each do |node|
     puts node.name
@@ -28,13 +32,14 @@ def parse_results(doc, route)
     end
 
     if node.attributes.include?("scheduled")
-      scheduled = node.attribute("scheduled").value.to_i/1000
-      arrival = "<no estimate available>"
+      scheduled = Time.at(node.attribute("scheduled").value.to_i/1000)
+      arrival = "<no estimate available>" if arrival.nil?
     end
 
-    # results  "Stop ID: #{stopID} - #{node.attribute("desc")}\n"
-    # results[block] = "#{node.attribute("shortSign")} - Estimated Arrival: #{arriveString} (Scheduled at #{scheduled.strftime("%H:%M")})\n"
+    results << "#{node.attribute("shortSign")} - Estimated Arrival: #{arrival} (Scheduled at #{scheduled.strftime("%H:%M")})"
   end
+
+  results.join("\n")
 end
 
 def parse_time(time)
